@@ -19,7 +19,6 @@
 
 #define I2C_DEVICE "/dev/i2c-"
 #define I2C_DEFAULT_BUS 1
-#define I2C_ADDRESS BME280_I2C_ADDR_PRIM
 
 int fd;
 
@@ -120,12 +119,35 @@ int main(int argc, char* argv[])
 {
 	struct bme280_dev dev;
 	int8_t rslt = BME280_OK;
+	int bus = I2C_DEFAULT_BUS;
+	char i2c_bus[11];
+	char *address;
+// = BME280_I2C_ADDR_PRIM;
 
+	if (argc > 1)
+		bus = atoi(argv[1]);
+	
+	if (argc > 2)
+		snprintf(address, 4, "%s", argv[2]);
+	else
+		//snprintf(address, 4, "%s", BME280_I2C_ADDR_PRIM);
+		snprintf(address, 4, "%s", 0x77);
+		
+
+
+
+	if (address) printf("Address: %s", address);
+return 0;
+
+	snprintf(i2c_bus, sizeof(i2c_bus)+2, "%s%d", I2C_DEVICE, bus);
+
+/*
 	if (argc < 2)
 	{
 		fprintf(stderr, "{\"error\": {\"message\": \"Missing argument for i2c bus\", \"code\": %+d}}\n");
 		exit(1);
 	}
+*/
 	
 	// make sure to select BME280_I2C_ADDR_PRIM
 	// or BME280_I2C_ADDR_SEC as needed
@@ -142,9 +164,9 @@ int main(int argc, char* argv[])
 	dev.write = user_i2c_write;
 	dev.delay_ms = user_delay_ms;
 
-	if ((fd = open(argv[1], O_RDWR)) < 0)
+	if ((fd = open(i2c_bus, O_RDWR)) < 0)
 	{
-		fprintf(stderr, "{\"error\": {\"message\": \"Failed to open the i2c bus %s\", \"code\": 99}}\n", argv[1]);
+		fprintf(stderr, "{\"error\": {\"message\": \"Failed to open the i2c bus %s\", \"code\": 99}}\n", i2c_bus);
 		exit(1);
 	}
 	if (ioctl(fd, I2C_SLAVE, dev.dev_id) < 0)
